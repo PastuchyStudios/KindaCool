@@ -9,8 +9,12 @@ public class PlatformGenerator : MonoBehaviour {
     public Transform playerObject;
     public GameObject platformTemplate;
     public float chunkSize = 50;
-    public float platformDistance = 5;
+    public float verticalDistance = 25;
+    public float horizontalDistance = 5;
+    public float verticalJittering = 10;
+    public float horizotnalJittering = 2.4f;
     public int offsettingChunks = 2;
+    public float density = 0.75f;
 
     private List<Chunk> chunks;
     private ChunkId currentChunkId;
@@ -111,7 +115,7 @@ class Chunk {
         this.id = id;
         this.generator = generator;
 
-        generateChunkFloor();
+        generateChunkPlatforms();
     }
 
     public void remove() {
@@ -120,15 +124,31 @@ class Chunk {
         }
     }
 
-    private void generateChunkFloor() {
-        float iterationStart = -generator.chunkSize / 2 + generator.platformDistance / 2;
-        for (float x = iterationStart; x < generator.chunkSize / 2; x += generator.platformDistance) {
-            for (float z = iterationStart; z < generator.chunkSize / 2; z += generator.platformDistance) {
-                var position = id.Position + new Vector3(x, -generator.chunkSize / 2, z);
-                var platform = UnityEngine.Object.Instantiate(generator.platformTemplate, position, Quaternion.identity) as GameObject;
-                platform.transform.SetParent(generator.transform);
-                platforms.Add(platform);
+    private void generateChunkPlatforms() {
+        float horizontalStart = -generator.chunkSize / 2 + generator.horizontalDistance / 2;
+        float verticalStart = -generator.chunkSize / 2 + generator.verticalDistance / 2;
+
+        UnityEngine.Random.seed = Id.GetHashCode();
+
+        for (float x = horizontalStart; x < generator.chunkSize / 2; x += generator.horizontalDistance) {
+            for (float y = verticalStart; y < generator.chunkSize / 2; y += generator.verticalDistance) {
+                for (float z = horizontalStart; z < generator.chunkSize / 2; z += generator.horizontalDistance) {
+                    if (UnityEngine.Random.value < generator.density) {
+                        var position = id.Position + new Vector3(x, y, z) + randomShift();
+                        var platform = UnityEngine.Object.Instantiate(generator.platformTemplate, position, Quaternion.identity) as GameObject;
+                        platform.transform.SetParent(generator.transform);
+                        platforms.Add(platform);
+                    }
+                }
             }
         }
+    }
+
+    private Vector3 randomShift() {
+        return new Vector3(
+            UnityEngine.Random.Range(-generator.horizotnalJittering, generator.horizotnalJittering),
+            UnityEngine.Random.Range(-generator.verticalJittering, generator.verticalJittering),
+            UnityEngine.Random.Range(-generator.horizotnalJittering, generator.horizotnalJittering)
+        );
     }
 }
