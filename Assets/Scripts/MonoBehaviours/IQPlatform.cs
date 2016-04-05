@@ -11,18 +11,7 @@ public class IQPlatform : MonoBehaviour {
     private new Rigidbody rigidbody;
 
     void Start() {
-        rigidbody = GetComponent<Rigidbody>();
-        if (rigidbody == null) {
-            foreach (Transform child in transform) {
-                rigidbody = child.GetComponent<Rigidbody>();
-                if (rigidbody != null) {
-                    break;
-                }
-            }
-        }
-        if (rigidbody == null) {
-            throw new System.Exception("No Rigidbody found");
-        }
+        rigidbody = GetComponentInChildren(typeof(Rigidbody), false) as Rigidbody;
     }
 
     void FixedUpdate() {

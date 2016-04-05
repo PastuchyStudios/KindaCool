@@ -8,6 +8,7 @@ using System.Collections.Generic;
 public class Breakable : ForceReceiver {
 
     public string breakableTag;
+    public float fractureForceThreshold;
 
     private Vector2[] vertices = null;
     private Rect aabb;
@@ -75,6 +76,10 @@ public class Breakable : ForceReceiver {
     }
 
     public override void receiveHit(PlatformHit hit) {
+        if (hit.force < fractureForceThreshold) {
+            return;
+        }
+
         Vector3 localHitPoint = transform.InverseTransformPoint(hit.point);
         //localHitPoint = new Vector3(-0.4f, 0.5f, -0.4f);
 
