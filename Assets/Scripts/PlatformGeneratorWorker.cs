@@ -10,7 +10,7 @@ public class PlatformGeneratorWorker {
     private object playerPositionLock = new object();
     private bool playerChunkChanged = false;
 
-    private IList<ChunkChange> chunkChanges;
+    private IList<ChunkChange> chunkChanges = new List<ChunkChange>();
     private object resultsLock = new object();
 
     private bool working = true;
