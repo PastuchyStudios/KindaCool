@@ -15,8 +15,17 @@ public static class PolyU {
     }
 
     public static float GetArea(Vector2[] vertices) {
-        var flat = PolyKonvert.toValues(vertices);
-        return PolyK.GetArea(flat);
+        if (vertices.Length < 3) {
+            return 0;
+        }
+        int lastIndex = vertices.Length - 1;
+
+        float sum = 0;
+        for (int i = 0; i < lastIndex; i++) {
+            sum += (vertices[i + 1].x - vertices[i].x) * (vertices[i].y + vertices[i + 1].y);
+        }
+        sum += (vertices[0].x - vertices[lastIndex].x) * (vertices[lastIndex].y + vertices[0].y);
+        return -sum * 0.5f;
     }
 
     public static Rect GetAABB(Vector2[] vertices) {
@@ -99,19 +108,3 @@ public static class PolyU {
         return (PolyKClosestEdge) PolyK.ClosestEdge(flat, point.x, point.y, null);
     }
 }
-
-//class FlaggedVector2 {
-//    public float x { get; set; }
-//    public float y { get; set; }
-//    public bool flag { get; set; }
-
-//    public FlaggedVector2(float x, float y, bool flag) {
-//        this.x = x;
-//        this.y = y;
-//        this.flag = flag;
-//    }
-
-//    public Vector2 toVector2() {
-//        return new Vector2(x, y);
-//    }
-//}

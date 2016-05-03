@@ -10,6 +10,9 @@ public class Breakable : ForceReceiver {
     public string breakableTag;
     public float fractureForceThreshold;
 
+    [Range(0, 1)]
+    public float minSliceArea = 0.1f;
+
     private Vector2[] vertices = null;
     private Rect aabb;
     private Vector2 aabbDiagonal;
@@ -104,6 +107,13 @@ public class Breakable : ForceReceiver {
         while (!template.CompareTag(breakableTag)) {
             template = template.parent;
         }
+        foreach (Vector2[] slice in slices) {
+            float sliceArea = PolyU.GetArea(slice);
+            if (sliceArea < minSliceArea) {
+                return;
+            }
+        }
+
         foreach (Vector2[] slice in slices) {
             GameObject sliceObject = Instantiate(template.gameObject) as GameObject;
             sliceObject.name = "Platform Slice";
