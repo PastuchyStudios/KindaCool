@@ -18,12 +18,14 @@ public class PlatformGeneratorWorker {
 
     private PlatformGenerator generator;
     private readonly int offsettingChunks;
+    private readonly int additionalDownOffset;
     private HashSet<ChunkId> visibleChunks = new HashSet<ChunkId>();
     private Queue<ChunkId> chunksBeingGenerated = new Queue<ChunkId>();
 
     public PlatformGeneratorWorker(PlatformGenerator generator) {
         this.generator = generator;
         this.offsettingChunks = generator.offsettingChunks;
+        this.additionalDownOffset = generator.additionalDownOffset;
     }
 
     public void Start() {
@@ -37,7 +39,11 @@ public class PlatformGeneratorWorker {
     private void Work() {
         while (Working) {
             // https://www.youtube.com/watch?v=KlujizeNNQM
-            Step();
+            try {
+                Step();
+            } catch (Exception e) {
+                Debug.Log(e);
+            }
         }
     }
 
@@ -46,11 +52,14 @@ public class PlatformGeneratorWorker {
         if (PlayerChunkChanged) {
             ChunkId centerChunk = PlayerChunkId;
             HashSet<ChunkId> newVisible = new HashSet<ChunkId>(localChunks(centerChunk.X, centerChunk.Y, centerChunk.Z));
-            foreach (var id in visibleChunks.Where(e => !newVisible.Contains(e))) {
+
+            IList<ChunkId> chunksToRemove = visibleChunks.Where(e => !newVisible.Contains(e)).ToList();
+            foreach (var id in chunksToRemove) {
                 AddChunkToRemove(id);
+                visibleChunks.Remove(id);
             }
-            chunksBeingGenerated = new Queue<ChunkId>(newVisible.Where(e => !visibleChunks.Contains(e)).Where(e => e != centerChunk));
-            chunkToDo = centerChunk;
+            chunksBeingGenerated = new Queue<ChunkId>(newVisible.Where(e => !visibleChunks.Contains(e)).Where(e => !e.Equals(centerChunk)));
+            chunkToDo = visibleChunks.Contains(centerChunk) ? null : centerChunk;
         } else if (chunksBeingGenerated.Any()) {
             chunkToDo = chunksBeingGenerated.Dequeue();
         }
@@ -95,7 +104,7 @@ public class PlatformGeneratorWorker {
 
     private IEnumerable<ChunkId> localChunks(int x0, int y0, int z0) {
         for (int x = -offsettingChunks; x <= offsettingChunks; x++) {
-            for (int y = -offsettingChunks; y <= offsettingChunks; y++) {
+            for (int y = -offsettingChunks - additionalDownOffset; y <= offsettingChunks; y++) {
                 for (int z = -offsettingChunks; z <= offsettingChunks; z++) {
                     yield return new ChunkId(x + x0, y + y0, z + z0, generator);
                 }
@@ -168,22 +177,20 @@ public class PlatformGeneratorWorker {
 
 }
 
-public struct ChunkChange {
-    public readonly ChunkId ChunkId;
-    public readonly IList<Vector3> AddedElements;
-    public readonly bool WasRemoved;
-
-    private ChunkChange(ChunkId chunkId, IList<Vector3> added, bool wasRemoved) {
-        this.ChunkId = chunkId;
-        this.AddedElements = added;
-        this.WasRemoved = wasRemoved;
-    }
+public class ChunkChange {
+    public ChunkId ChunkId { get; private set; }
+    public IList<Vector3> AddedElements { get; private set; }
+    public bool WasRemoved { get; private set; }
 
     public static ChunkChange Removed(ChunkId chunkId) {
-        return new ChunkChange(chunkId, new List<Vector3>(), true); 
+        return new ChunkChange { ChunkId = chunkId, AddedElements = new List<Vector3>(), WasRemoved = true };
     }
 
     public static ChunkChange Added(ChunkId chunkId, IList<Vector3> added) {
-        return new ChunkChange(chunkId, added, false);
+        return new ChunkChange { ChunkId = chunkId, AddedElements = added, WasRemoved = false };
+    }
+
+    public override string ToString() {
+        return String.Format("Change: {0} {1}", ChunkId, WasRemoved);
     }
 }

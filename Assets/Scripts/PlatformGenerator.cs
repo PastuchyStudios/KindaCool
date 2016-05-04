@@ -14,7 +14,8 @@ public class PlatformGenerator : MonoBehaviour {
     public float verticalJittering = 10;
     public float horizotnalJittering = 2.4f;
     public int offsettingChunks = 2;
-    public float density = 0.75f;
+    public int additionalDownOffset = 1;
+    public float density = 0.4f;
 
     private IDictionary<ChunkId, Chunk> chunks;
     private ChunkId currentChunkId;
@@ -40,6 +41,7 @@ public class PlatformGenerator : MonoBehaviour {
         IList<ChunkChange> changes = worker.GetChanges();
         foreach (var change in changes) {
             if (change.WasRemoved) {
+                chunks[change.ChunkId].Remove();
                 chunks.Remove(change.ChunkId);
             } else {
                 chunks.Add(change.ChunkId, new Chunk(this, change.AddedElements));
@@ -98,6 +100,10 @@ public class ChunkId {
     public override int GetHashCode() {
         return x * 37 + y * 31 + z * 13;
     }
+
+    public override string ToString() {
+        return String.Format("({0} {1} {2})", X, Y, Z);
+    }
 }
 
 class Chunk {
@@ -111,7 +117,7 @@ class Chunk {
         generateChunkPlatforms(positions);
     }
 
-    public void remove() {
+    public void Remove() {
         foreach (GameObject platform in platforms) {
             UnityEngine.Object.Destroy(platform);
         }
