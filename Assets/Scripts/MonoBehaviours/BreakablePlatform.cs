@@ -5,13 +5,12 @@ using System.Collections.Generic;
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshCollider))]
 [RequireComponent(typeof(Rigidbody))]
-public class Breakable : ForceReceiver {
+public class BreakablePlatform : ForceReceiver {
 
-    public string breakableTag;
-    public float fractureForceThreshold;
+    public float fractureForceThreshold = 20;
 
     [Range(0, 1)]
-    public float minSliceArea = 0.1f;
+    public float minSliceArea = 0.03f;
 
     private Vector2[] vertices = null;
     private Rect aabb;
@@ -50,21 +49,6 @@ public class Breakable : ForceReceiver {
     }
 
     private void setPlatform2dVertices(Mesh mesh) {
-        //var vertices = new List<Vector2>();
-        //int vertexIndex = 0;
-
-        //foreach (Vector3 vertex3 in mesh.vertices) {
-        //    if (vertex3.y < highY) {
-        //        continue;
-        //    }
-        //    Vector2 vertex2 = new Vector2(vertex3.x, vertex3.z);
-        //    if (!vertices.Contains(vertex2)) {
-        //        vertices.Add(vertex2);
-        //    }
-        //    vertexIndex++;
-        //}
-
-        //this.vertices = vertices.ToArray();
         vertices = new Vector2[] {
             new Vector2(0.5f, 0.5f),
             new Vector2(-0.5f, 0.5f),
@@ -78,13 +62,12 @@ public class Breakable : ForceReceiver {
         aabbDiagonal = new Vector2(aabb.width, aabb.height);
     }
 
-    public override void receiveHit(PlatformHit hit) {
+    public override void receiveHit(AppliedForce hit) {
         if (hit.force < fractureForceThreshold) {
             return;
         }
 
         Vector3 localHitPoint = transform.InverseTransformPoint(hit.point);
-        //localHitPoint = new Vector3(-0.4f, 0.5f, -0.4f);
 
         Vector3 scaledCenterOfMass = GetComponent<Rigidbody>().centerOfMass;
         Vector3 centerOfMass = new Vector3(
@@ -103,10 +86,6 @@ public class Breakable : ForceReceiver {
         Vector2 p2 = flatten(localHitPoint + -aabbDiagonal.magnitude * perpendicular);
 
         var slices = PolyKU.Slice(vertices, p1, p2);
-        Transform template = transform;
-        while (!template.CompareTag(breakableTag)) {
-            template = template.parent;
-        }
         foreach (Vector2[] slice in slices) {
             float sliceArea = PolyU.GetArea(slice);
             if (sliceArea < minSliceArea) {
@@ -115,12 +94,11 @@ public class Breakable : ForceReceiver {
         }
 
         foreach (Vector2[] slice in slices) {
-            GameObject sliceObject = Instantiate(template.gameObject) as GameObject;
-            sliceObject.name = "Platform Slice";
-            Transform geometry = sliceObject.transform.FindChild("Geometry");
-            geometry.GetComponent<Breakable>().setShape(slice, lowY, highY);
+            GameObject shard = Instantiate(transform.gameObject) as GameObject;
+            shard.name = "Platform Shard";
+            shard.GetComponent<BreakablePlatform>().setShape(slice, lowY, highY);
         }
-        Destroy(template.gameObject);
+        Destroy(transform.gameObject);
     }
 
     private static Vector2 flatten(Vector3 vector) {
