@@ -21,12 +21,13 @@ public class GenerateHitOnCollision : MonoBehaviour {
     }
 
     void OnControllerColliderHit(ControllerColliderHit hit) {
-        Breakable breakable = hit.gameObject.GetComponentInChildren(typeof(Breakable), false) as Breakable;
-        if (breakable == null) {
+        ForceReceiver forceReceiver = hit.gameObject.GetComponentInChildren(typeof(ForceReceiver), false) as ForceReceiver;
+        if (forceReceiver == null) {
             return;
         }
 
-        PlatformHit platformHit = new PlatformHit(hit.point, lastVelocity.magnitude * velocityToForceFactor);
-        breakable.receiveHit(platformHit);
+        AppliedForce hitForce = new AppliedForce(hit.point, lastVelocity.magnitude * velocityToForceFactor);
+        forceReceiver.receiveHit(hitForce);
+        lastVelocity = Vector3.zero;
     }
 }
