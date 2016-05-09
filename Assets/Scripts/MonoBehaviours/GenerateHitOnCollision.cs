@@ -26,7 +26,8 @@ public class GenerateHitOnCollision : MonoBehaviour {
             return;
         }
 
-        AppliedForce platformHit = new AppliedForce(hit.point, lastVelocity.magnitude * velocityToForceFactor);
-        forceReceiver.receiveHit(platformHit);
+        AppliedForce hitForce = new AppliedForce(hit.point, lastVelocity.magnitude * velocityToForceFactor);
+        forceReceiver.receiveHit(hitForce);
+        lastVelocity = Vector3.zero;
     }
 }
