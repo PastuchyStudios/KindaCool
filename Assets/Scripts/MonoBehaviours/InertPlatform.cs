@@ -8,6 +8,7 @@ public class InertPlatform : MonoBehaviour {
     public float velocityThreshold = 0.05f;
 
     private float accumulatedFactor = 0;
+    private float totalFactor = 0;
 
     private new Rigidbody rigidbody;
 
@@ -18,11 +19,12 @@ public class InertPlatform : MonoBehaviour {
     void FixedUpdate() {
         if (rigidbody.velocity.magnitude >= velocityThreshold) {
             accumulatedFactor += brakingForceIncreaseFactor;
-            float totalFactor = initialBrakingForceFactor + accumulatedFactor;
+            totalFactor = initialBrakingForceFactor + accumulatedFactor;
             Vector3 force = rigidbody.velocity.normalized * -totalFactor;
             rigidbody.AddForce(force);
         }
-        else {
+        else if (totalFactor > 0) {
+            totalFactor = 0;
             accumulatedFactor = 0;
             rigidbody.velocity = Vector3.zero;
         }
