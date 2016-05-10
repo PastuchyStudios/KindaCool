@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System;
-using UnityEditor;
 
 public static class PolyU {
     public static bool IsSimple(Vector2[] vertices) {
@@ -150,27 +149,37 @@ public static class PolyU {
         var verticesList = new List<Vector2>(vertices);
         verticesList.Add(vertices[0]);
 
-        float minDistance = Mathf.Infinity;
+        float minDistanceSquared = Mathf.Infinity;
         int minIndex = -1;
         Vector2 minA = Vector2.zero, minB = Vector2.zero;
+        Vector2 closestPoint = Vector2.zero;    // will always be overwritten
 
         for (int i = 0; i < vertices.Length; i++) {
             var a = verticesList[i];
             var b = verticesList[i + 1];
-            float distance = HandleUtility.DistancePointToLineSegment(point, a, b);
-            if (distance < minDistance) {
-                minDistance = distance;
+            Vector2 pointOnSegment = closestPointOnSegment(a, b, point);
+            float distanceSqr = distanceSquared(point, pointOnSegment);
+            if (distanceSqr < minDistanceSquared) {
+                minDistanceSquared = distanceSqr;
                 minIndex = i;
                 minA = a;
                 minB = b;
+                closestPoint = pointOnSegment;
             }
         }
 
-        Vector2 pointOnLine = closestPointOnLine(minA, minB, point);
-        return new ClosestEdgeU(minIndex, minA, minB, minDistance, pointOnLine);
+        return new ClosestEdgeU(minIndex, minA, minB, minDistanceSquared, closestPoint);
     }
 
-    private static Vector2 closestPointOnLine(Vector2 a, Vector2 b, Vector2 point) {
+    private static float distanceSquared(Vector2 k, Vector2 l) {
+        return sqr(k.x - l.x) + sqr(k.y - l.y);
+    }
+
+    private static float sqr(float x) {
+        return x * x;
+    }
+
+    private static Vector2 closestPointOnSegment(Vector2 a, Vector2 b, Vector2 point) {
         // Based on http://forum.unity3d.com/threads/math-problem.8114/#post-59715
         Vector3 vVector1 = new Vector3(point.x - a.x, 0, point.y - a.y);
         Vector3 vVector2 = new Vector3(b.x - a.x, 0, b.y - a.y).normalized;
