@@ -20,8 +20,12 @@ public class BreakablePlatform : ForceReceiver {
     public float shatterTargetSliceArea = 0.15f;
     public Material deadMaterial;
 
+    public bool dead { get; private set; }
+
     private Vector2[] _vertices = null;
     private float _area = 0;
+
+    private static GameObject platformContainer;
 
     private Vector2[] vertices {
         get { return _vertices; }
@@ -49,6 +53,10 @@ public class BreakablePlatform : ForceReceiver {
         }
 
         calculateAABB();
+
+        if (platformContainer == null) {
+            platformContainer = GameObject.Find("/Platforms Container");
+        }
     }
 
     private void setLowHighY(Mesh mesh) {
@@ -204,6 +212,8 @@ public class BreakablePlatform : ForceReceiver {
         foreach (Vector2[] slice in slices) {
             GameObject shard = Instantiate(platform) as GameObject;
             shard.name = "Platform Shard";
+            shard.tag = "Platform Shard";
+            shard.transform.parent = platformContainer.transform;
             shard.GetComponent<BreakablePlatform>().setShape(slice, lowY, highY);
             if (shard.GetComponent<BreakablePlatform>().area < shardDeathThreshold) {
                 shard.GetComponent<BreakablePlatform>().kill();
@@ -254,5 +264,7 @@ public class BreakablePlatform : ForceReceiver {
         var rigidbody = GetComponent<Rigidbody>();
         rigidbody.constraints = RigidbodyConstraints.None;
         rigidbody.useGravity = true;
+
+        dead = true;
     }
 }
