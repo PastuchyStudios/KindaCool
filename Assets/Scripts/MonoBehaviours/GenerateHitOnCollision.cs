@@ -14,20 +14,20 @@ public class GenerateHitOnCollision : MonoBehaviour {
     
     private Vector3 lastVelocity;
 
-    private CharacterController characterControler;
+    private CharacterController characterController;
 
     private ScoreCounter scoreCounter; 
     
     private Vector3 position; 
     
     void Start() {
-        characterControler = GetComponent<CharacterController>();
+        characterController = GetComponent<CharacterController>();
         scoreCounter = GetComponent<ScoreCounter>();
-        position = characterControler.transform.position;
+        position = characterController.transform.position;
     }
 
     void FixedUpdate() {
-        lastVelocity = characterControler.velocity;
+        lastVelocity = characterController.velocity;
     }
 
     void OnControllerColliderHit(ControllerColliderHit hit) {
@@ -36,7 +36,7 @@ public class GenerateHitOnCollision : MonoBehaviour {
             return;
         }
 
-        float forceMagnitude = lastVelocity.magnitude * velocityToForceFactor;
+        float forceMagnitude = (lastVelocity - hit.rigidbody.velocity).magnitude * velocityToForceFactor;
         
         AppliedForce hitForce = new AppliedForce(hit.point, forceMagnitude);
         forceReceiver.receiveHit(hitForce);
