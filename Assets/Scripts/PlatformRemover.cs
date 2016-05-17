@@ -15,7 +15,7 @@ public class PlatformRemover : MonoBehaviour {
 
         if (Vector2.Distance(playerFlatPosition, platformFlatPosition) > horizontalDistance
             || Mathf.Abs(playerHeight - shardHeight) > verticalDistance) {
-            // Destroy(gameObject);
+            Destroy(gameObject);
         }
     }
 }
