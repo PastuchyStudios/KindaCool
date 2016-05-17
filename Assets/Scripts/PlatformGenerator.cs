@@ -16,21 +16,16 @@ public class PlatformGenerator : MonoBehaviour {
     public int offsettingChunks = 2;
     public int additionalDownOffset = 1;
     public float density = 0.4f;
+    public float initialSpeed = 10;
 
-    private IDictionary<ChunkId, Chunk> chunks;
     private ChunkId currentChunkId;
 
     private PlatformGeneratorWorker worker;
 
-	void Start () {
-        currentChunkId = new ChunkId(0, 0, 0, this);
-        chunks = new Dictionary<ChunkId, Chunk>();
+    void Start() {
+        Restart();
+    }
 
-        worker = new PlatformGeneratorWorker(this);
-        worker.Start();
-        worker.PlayerChunkId = currentChunkId;
-	}
-	
 	void FixedUpdate() {
         var newChunk = ChunkId.forCoordinates(playerObject.position, this);
         if (!newChunk.Equals(currentChunkId)) {
@@ -38,14 +33,12 @@ public class PlatformGenerator : MonoBehaviour {
             worker.PlayerChunkId = currentChunkId;        
         }
 
-        IList<ChunkChange> changes = worker.GetChanges();
-        foreach (var change in changes) {
-            if (change.WasRemoved) {
-                chunks[change.ChunkId].Remove();
-                chunks.Remove(change.ChunkId);
-            } else {
-                chunks.Add(change.ChunkId, new Chunk(this, change.AddedElements));
-            }
+        List<PlatformStub> stubs = worker.GetPlatformStubs();
+        foreach (var stub in stubs) {
+            var platform = UnityEngine.Object.Instantiate(platformTemplate, stub.Position, Quaternion.identity) as GameObject;
+            platform.transform.SetParent(transform);
+            platform.GetComponent<Rigidbody>().velocity = stub.Velocity;
+            Debug.Log(stub.Velocity);
         }           
 	}
 
@@ -54,6 +47,18 @@ public class PlatformGenerator : MonoBehaviour {
         worker.Stop();
     }
 
+	public void Restart () {
+        currentChunkId = new ChunkId(0, 0, 0, this);
+
+        if (worker != null) {
+            worker.Stop();
+        }
+
+        worker = new PlatformGeneratorWorker(this);
+        worker.Start();
+        worker.PlayerChunkId = currentChunkId;
+	}
+	
 }
 
 public class ChunkId {
@@ -103,31 +108,5 @@ public class ChunkId {
 
     public override string ToString() {
         return String.Format("({0} {1} {2})", X, Y, Z);
-    }
-}
-
-class Chunk {
-    private readonly List<GameObject> platforms;
-    private readonly PlatformGenerator generator;
-
-    public Chunk(PlatformGenerator generator, IList<Vector3> positions) {
-        platforms = new List<GameObject>();
-        this.generator = generator;
-
-        generateChunkPlatforms(positions);
-    }
-
-    public void Remove() {
-        foreach (GameObject platform in platforms) {
-            UnityEngine.Object.Destroy(platform);
-        }
-    }
-
-    private void generateChunkPlatforms(IList<Vector3> positions) {
-        foreach (var position in positions) {
-            var platform = UnityEngine.Object.Instantiate(generator.platformTemplate, position, Quaternion.identity) as GameObject;
-            platform.transform.SetParent(generator.transform);
-            platforms.Add(platform);
-        }
     }
 }

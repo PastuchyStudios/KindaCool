@@ -10,7 +10,7 @@ public class PlatformGeneratorWorker {
     private object playerPositionLock = new object();
     private bool playerChunkChanged = false;
 
-    private IList<ChunkChange> chunkChanges = new List<ChunkChange>();
+    private List<PlatformStub> platformStubs = new List<PlatformStub>();
     private object resultsLock = new object();
 
     private bool working = true;
@@ -19,7 +19,7 @@ public class PlatformGeneratorWorker {
     private PlatformGenerator generator;
     private readonly int offsettingChunks;
     private readonly int additionalDownOffset;
-    private HashSet<ChunkId> visibleChunks = new HashSet<ChunkId>();
+    private HashSet<ChunkId> generatedChunks = new HashSet<ChunkId>();
     private Queue<ChunkId> chunksBeingGenerated = new Queue<ChunkId>();
 
     public PlatformGeneratorWorker(PlatformGenerator generator) {
@@ -53,25 +53,20 @@ public class PlatformGeneratorWorker {
             ChunkId centerChunk = PlayerChunkId;
             HashSet<ChunkId> newVisible = new HashSet<ChunkId>(localChunks(centerChunk.X, centerChunk.Y, centerChunk.Z));
 
-            IList<ChunkId> chunksToRemove = visibleChunks.Where(e => !newVisible.Contains(e)).ToList();
-            foreach (var id in chunksToRemove) {
-                AddChunkToRemove(id);
-                visibleChunks.Remove(id);
-            }
-            chunksBeingGenerated = new Queue<ChunkId>(newVisible.Where(e => !visibleChunks.Contains(e)).Where(e => !e.Equals(centerChunk)));
-            chunkToDo = visibleChunks.Contains(centerChunk) ? null : centerChunk;
+            chunksBeingGenerated = new Queue<ChunkId>(newVisible.Where(e => !generatedChunks.Contains(e)).Where(e => !e.Equals(centerChunk)));
+            chunkToDo = generatedChunks.Contains(centerChunk) ? null : centerChunk;
         } else if (chunksBeingGenerated.Any()) {
             chunkToDo = chunksBeingGenerated.Dequeue();
         }
 
         if (chunkToDo != null) {
-            AddPlatformsToGenerate(chunkToDo, GeneratePlatforms(chunkToDo));
-            visibleChunks.Add(chunkToDo);
+            AddPlatformsToGenerate(GeneratePlatforms(chunkToDo));
+            generatedChunks.Add(chunkToDo);
         }
     }
 
-    private IList<Vector3> GeneratePlatforms(ChunkId chunkToDo) {
-        List<Vector3> result = new List<Vector3>();
+    private List<PlatformStub> GeneratePlatforms(ChunkId chunkToDo) {
+        List<PlatformStub> result = new List<PlatformStub>();
         float horizontalStart = -generator.chunkSize / 2 + generator.horizontalDistance / 2;
         float verticalStart = -generator.chunkSize / 2 + generator.verticalDistance / 2;
 
@@ -82,7 +77,8 @@ public class PlatformGeneratorWorker {
                 for (float z = horizontalStart; z < generator.chunkSize / 2; z += generator.horizontalDistance) {
                     if (random.NextDouble() < generator.density) {
                         var position = chunkToDo.Position + new Vector3(x, y, z) + RandomShift(random);
-                        result.Add(position);
+                        var velocity = RandomVelocity(random);
+                        result.Add(new PlatformStub { Position = position, Velocity = velocity });
                     }
                 }
             }
@@ -96,6 +92,16 @@ public class PlatformGeneratorWorker {
             RandomFromRange(random, -generator.verticalJittering, generator.verticalJittering),
             RandomFromRange(random, -generator.horizotnalJittering, generator.horizotnalJittering)
         );
+    }
+
+    private Vector3 RandomVelocity(System.Random random) {
+        float phi = RandomFromRange(random, 0.0f, (float) Math.PI);
+        float z = RandomFromRange(random, -1, 1);
+        float theta = (float) Math.Acos(z);
+
+        float x = (float)(Math.Sin(theta) * Math.Cos(phi));
+        float y = (float)(Math.Sin(theta) * Math.Sin(phi));
+        return new Vector3(x, y, z) * RandomFromRange(random, 0, generator.initialSpeed);
     }
 
     private float RandomFromRange(System.Random random, float min, float max) {
@@ -144,11 +150,11 @@ public class PlatformGeneratorWorker {
         }
     }
 
-    public IList<ChunkChange> GetChanges() {
-        IList<ChunkChange> temp;
+    public List<PlatformStub> GetPlatformStubs() {
+        List<PlatformStub> temp;
         lock (resultsLock) {
-            temp = chunkChanges;
-            chunkChanges = new List<ChunkChange>();
+            temp = platformStubs;
+            platformStubs = new List<PlatformStub>();
         }
         return temp;
     }
@@ -163,34 +169,14 @@ public class PlatformGeneratorWorker {
         }
     }
 
-    private void AddPlatformsToGenerate(ChunkId chunkId, IList<Vector3> positions) {
+    private void AddPlatformsToGenerate(IList<PlatformStub> stubs) {
         lock (resultsLock) {
-            chunkChanges.Add(ChunkChange.Added(chunkId, positions));
+            platformStubs.AddRange(stubs);
         }
     }
+   }
 
-    private void AddChunkToRemove(ChunkId chunkId) {
-        lock (resultsLock) {
-            chunkChanges.Add(ChunkChange.Removed(chunkId));
-        }
-    }
-
-}
-
-public class ChunkChange {
-    public ChunkId ChunkId { get; private set; }
-    public IList<Vector3> AddedElements { get; private set; }
-    public bool WasRemoved { get; private set; }
-
-    public static ChunkChange Removed(ChunkId chunkId) {
-        return new ChunkChange { ChunkId = chunkId, AddedElements = new List<Vector3>(), WasRemoved = true };
-    }
-
-    public static ChunkChange Added(ChunkId chunkId, IList<Vector3> added) {
-        return new ChunkChange { ChunkId = chunkId, AddedElements = added, WasRemoved = false };
-    }
-
-    public override string ToString() {
-        return String.Format("Change: {0} {1}", ChunkId, WasRemoved);
-    }
+public class PlatformStub {
+    public Vector3 Position { get; set; }
+    public Vector3 Velocity { get; set; }
 }
