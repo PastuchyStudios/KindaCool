@@ -38,7 +38,7 @@ public class PlatformGenerator : MonoBehaviour {
             var platform = UnityEngine.Object.Instantiate(platformTemplate, stub.Position, Quaternion.identity) as GameObject;
             platform.transform.SetParent(transform);
             platform.GetComponent<Rigidbody>().velocity = stub.Velocity;
-            Debug.Log(stub.Velocity);
+            platform.GetComponent<PlatformRemover>().playerCharacter = playerObject;
         }           
 	}
 
