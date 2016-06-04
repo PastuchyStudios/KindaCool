@@ -18,7 +18,7 @@ public class ScoreCounter : MonoBehaviour
     }
     
     void OnGUI() {
-        GUI.Label(rect, additionalText + string.Format("{0:0.0000}", score), style);
+        GUI.Label(rect, additionalText + string.Format("{0:0.00}", score), style);
     }
     
     internal void updateScore() {

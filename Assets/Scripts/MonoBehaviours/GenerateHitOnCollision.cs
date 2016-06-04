@@ -42,7 +42,7 @@ public class GenerateHitOnCollision : MonoBehaviour {
         forceReceiver.receiveHit(hitForce);
         
         if (forceMagnitude > durability) {
-            restartScreen.GetComponent<RestartScreen>().enable(scoreCounter.score);
+            restartScreen.gameObject.SetActive(true);
         } else {
             scoreCounter.updateScore();
         }
