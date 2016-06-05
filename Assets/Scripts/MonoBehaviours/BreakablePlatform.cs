@@ -18,10 +18,19 @@ public class BreakablePlatform : ForceReceiver {
     public float shardDeathThreshold = 0.3f;
     [Range(0, 0.24f)]
     public float shatterTargetSliceArea = 0.15f;
+    
+    public float autodestructionDelay = 5;
+    
     public Material deadMaterial;
 
+    public Material progressCircleMaterial;
+    
     public bool dead { get; private set; }
 
+    private bool hitReceived;
+    
+    private float timeWhenReceivedHit;
+    
     private Vector2[] _vertices = null;
     private float _area = 0;
 
@@ -59,6 +68,17 @@ public class BreakablePlatform : ForceReceiver {
         }
     }
 
+    void Update() {
+        if (hitReceived) {
+            float timePassed = Time.time - timeWhenReceivedHit;
+            if (timePassed < autodestructionDelay) {
+                gameObject.GetComponent<MeshRenderer>().materials[1].SetFloat("_Cutoff", 1 - timePassed/autodestructionDelay);
+            } else {
+                shatter(new Vector3(0, 0.5f, 0));
+            }
+        }
+    }
+    
     private void setLowHighY(Mesh mesh) {
         float y1 = mesh.vertices[0].y;
         lowY = highY = y1;
@@ -90,8 +110,19 @@ public class BreakablePlatform : ForceReceiver {
     }
 
     public override void receiveHit(AppliedForce force) {
+      
         Vector3 localHitPoint = transform.InverseTransformPoint(force.point);
-
+       
+        if (!hitReceived) {
+            timeWhenReceivedHit = Time.time;
+            
+            MeshRenderer meshRenderer = gameObject.GetComponent<MeshRenderer>();
+            Material[] materials = { meshRenderer.material, progressCircleMaterial };
+            meshRenderer.materials = materials;
+        
+            hitReceived = true;
+        }
+        
         if (force.magnitude >= shatterForce) {
             shatter(localHitPoint);
         }
@@ -267,4 +298,5 @@ public class BreakablePlatform : ForceReceiver {
 
         dead = true;
     }
+   
 }
