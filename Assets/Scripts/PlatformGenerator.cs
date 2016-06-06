@@ -3,6 +3,7 @@ using System.Collections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.Assertions.Must;
 
 public class PlatformGenerator : MonoBehaviour {
 
@@ -48,8 +49,13 @@ public class PlatformGenerator : MonoBehaviour {
                     UnityEngine.Object.Instantiate(powerupTemplate, stub.Position + Vector3.up*1.3f, Quaternion.identity)
                         as GameObject;
                 powerup.transform.parent = transform;
-                powerup.GetComponent<BoundToPlatform>().platform = platform;
+                powerup.GetComponent<BoundToPlatform>().platform = platform;;
                 platform.AddComponent<PowerupRemover>().powerup = powerup;
+                powerup.GetComponent<Renderer>().material.color = Color.red;
+                var powerupActivator = powerup.GetComponent<PowerupActivator>();
+                powerupActivator.platformContainer = transform.gameObject;
+                powerupActivator.playerObject = playerObject.gameObject;
+                powerupActivator.action = ((playerObjectject, _) => playerObjectject.GetComponent<UpsideDown>().Run());
             }
         }
     }
