@@ -8,6 +8,7 @@ public class PlatformGenerator : MonoBehaviour {
 
     public Transform playerObject;
     public GameObject platformTemplate;
+    public GameObject powerupTemplate;
     public float chunkSize = 50;
     public float verticalDistance = 25;
     public float horizontalDistance = 5;
@@ -17,6 +18,8 @@ public class PlatformGenerator : MonoBehaviour {
     public int additionalDownOffset = 1;
     public float density = 0.4f;
     public float initialSpeed = 10;
+
+    public float powerupChance = 0.05f;
 
     private ChunkId currentChunkId;
 
@@ -39,8 +42,17 @@ public class PlatformGenerator : MonoBehaviour {
             platform.transform.SetParent(transform);
             platform.GetComponent<Rigidbody>().velocity = stub.Velocity;
             platform.GetComponent<PlatformRemover>().playerCharacter = playerObject;
-        }           
-	}
+
+            if (stub.SpawnPowerup) {
+                var powerup =
+                    UnityEngine.Object.Instantiate(powerupTemplate, stub.Position + Vector3.up*1.3f, Quaternion.identity)
+                        as GameObject;
+                powerup.transform.parent = transform;
+                powerup.GetComponent<BoundToPlatform>().platform = platform;
+                platform.AddComponent<PowerupRemover>().powerup = powerup;
+            }
+        }
+    }
 
     void OnDestroy() {
         Debug.Log("Stopping worker thread...");

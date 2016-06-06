@@ -78,7 +78,7 @@ public class PlatformGeneratorWorker {
                     if (random.NextDouble() < generator.density) {
                         var position = chunkToDo.Position + new Vector3(x, y, z) + RandomShift(random);
                         var velocity = RandomVelocity(random);
-                        result.Add(new PlatformStub { Position = position, Velocity = velocity });
+                        result.Add(new PlatformStub { Position = position, Velocity = velocity, SpawnPowerup = random.NextDouble() < generator.powerupChance });
                     }
                 }
             }
@@ -179,4 +179,5 @@ public class PlatformGeneratorWorker {
 public class PlatformStub {
     public Vector3 Position { get; set; }
     public Vector3 Velocity { get; set; }
+    public Boolean SpawnPowerup { get; set; }
 }
