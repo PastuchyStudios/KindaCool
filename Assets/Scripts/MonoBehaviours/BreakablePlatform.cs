@@ -218,6 +218,18 @@ public class BreakablePlatform : ForceReceiver {
             if (shard.GetComponent<BreakablePlatform>().area < shardDeathThreshold) {
                 shard.GetComponent<BreakablePlatform>().kill();
             }
+                        
+            Mesh mesh = shard.GetComponent<MeshFilter>().mesh;
+            Vector2[] uv = new Vector2[mesh.vertices.Length];
+            for (int i = 0; i < uv.Length / 3; i++) {
+                uv[i] = new Vector2(mesh.vertices[i].x + 0.5f, mesh.vertices[i].z + 0.5f);
+            }
+            for (int i = uv.Length / 3; i < uv.Length; i ++) {
+                uv[i] = new Vector2(0.5f, 0.5f);
+            }
+            mesh.uv = uv;
+            shard.GetComponent<MeshRenderer>().material = deadMaterial; 
+            
             shards.Add(shard);
         }
         Destroy(platform);
