@@ -23,7 +23,7 @@ public class BreakablePlatform : ForceReceiver {
     
     public Material deadMaterial;
 
-    public Material progressCircleMaterial;
+    public Material progressIndicatorMaterial;
     
     public bool dead { get; private set; }
 
@@ -117,7 +117,7 @@ public class BreakablePlatform : ForceReceiver {
             timeWhenReceivedHit = Time.time;
             
             MeshRenderer meshRenderer = gameObject.GetComponent<MeshRenderer>();
-            Material[] materials = { meshRenderer.material, progressCircleMaterial };
+            Material[] materials = { meshRenderer.material, progressIndicatorMaterial };
             meshRenderer.materials = materials;
         
             hitReceived = true;
