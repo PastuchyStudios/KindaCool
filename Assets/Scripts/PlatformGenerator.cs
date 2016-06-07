@@ -55,7 +55,7 @@ public class PlatformGenerator : MonoBehaviour {
                 var powerupActivator = powerup.GetComponent<PowerupActivator>();
                 powerupActivator.platformContainer = transform.gameObject;
                 powerupActivator.playerObject = playerObject.gameObject;
-                powerupActivator.action = ((playerObjectject, _) => playerObjectject.GetComponent<UpsideDown>().Run());
+                powerupActivator.action = ((playerObjectject, _) => playerObjectject.GetComponent<Antigravity>().Run());
             }
         }
     }

@@ -1,40 +1,54 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
+using UnityStandardAssets.Characters.FirstPerson;
 
-public abstract class GravityChangingAction : MonoBehaviour
-{
+[RequireComponent(typeof(FirstPersonController))]
+public abstract class GravityChangingAction : MonoBehaviour {
 
-    public Vector3 newGravity;
+    public float effectGravityMultiplier;
     public float fadeDuration;
     public float fullStrengthDuration;
-    public float timeResolution = 0.1f;
-    public State state = State.Stopped;
 
-     public enum State { Stopped, Waiting, Running }
+    public State state { get; set; }
 
-    void Update() {
-        if (state == State.Waiting) {
-            state = State.Running;
-            StartCoroutine("PlayGravityChanges");
+    public enum State { Stopped, Running }
+
+    private FirstPersonController fpsController;
+
+    private float normalGravityMultiplier;
+    private DateTime startTime;
+
+    void Start() {
+        fpsController = GetComponent<FirstPersonController>();
+        normalGravityMultiplier = fpsController.gravityMultiplier;
+        state = State.Stopped;
+    }
+
+    public void FixedUpdate() {
+        if (state == State.Running) {
+            DateTime now = DateTime.Now;
+            float deltaSeconds = (float) (now - startTime).TotalSeconds;
+            if (deltaSeconds < fadeDuration) {
+                fpsController.gravityMultiplier = Mathf.Lerp(normalGravityMultiplier, effectGravityMultiplier, deltaSeconds / fadeDuration);
+            } else if (deltaSeconds > 2 * fadeDuration + fullStrengthDuration) {
+                fpsController.gravityMultiplier = normalGravityMultiplier;
+                state = State.Stopped;
+                Debug.Log("Antigravity stopped");
+            } else if (deltaSeconds > fadeDuration + fullStrengthDuration) {
+                deltaSeconds -= fadeDuration + fullStrengthDuration;
+                fpsController.gravityMultiplier = Mathf.Lerp(effectGravityMultiplier, normalGravityMultiplier, deltaSeconds / fadeDuration);
+            } else {
+                fpsController.gravityMultiplier = effectGravityMultiplier;
+            }
         }
     }
 
     public void Run() {
         if (state == State.Stopped) {
+            Debug.Log("Antigravity fired");
+            startTime = DateTime.Now;
             state = State.Running;
         }
-    }
-
-    private IEnumerator PlayGravityChanges() {
-        for (float t = 0.0f; t <= fadeDuration; t += timeResolution) {
-            Physics.gravity = (newGravity * t + Vector3.down * (fadeDuration - t)) / fadeDuration;
-            yield return new WaitForSeconds(timeResolution);
-        }
-        yield return new WaitForSeconds(fullStrengthDuration);
-        for (float t = timeResolution; t >= 0.0f; t -= timeResolution) {
-            Physics.gravity = (newGravity * t + Vector3.down * (fadeDuration - t)) / fadeDuration;
-            yield return new WaitForSeconds(timeResolution);
-        }
-        state = State.Stopped;
     }
 }
