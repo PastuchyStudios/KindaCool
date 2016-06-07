@@ -36,7 +36,7 @@ public class GenerateHitOnCollision : MonoBehaviour {
             groundObject = null;
         } else if (groundObject != null) {
             var groundPositionDelta = groundObject.position - lastGroundPosition;
-            groundPositionDelta = new Vector3(groundPositionDelta.x, groundPositionDelta.y * 2, groundPositionDelta.z);
+            groundPositionDelta = new Vector3(groundPositionDelta.x, groundPositionDelta.y - 0.01f, groundPositionDelta.z);
             characterController.Move(groundPositionDelta);
             lastGroundPosition = groundObject.position;
         }
