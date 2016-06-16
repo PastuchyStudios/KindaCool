@@ -2,7 +2,7 @@
 
 public class ExitOnEscape : MonoBehaviour {
     void Update() {
-        if (Input.GetKeyDown(KeyCode.Escape) && Cursor.visible) {
+        if (Input.GetKeyDown(KeyCode.Escape)) {
             Application.Quit();
         }
     }
